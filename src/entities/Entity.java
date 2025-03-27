@@ -27,6 +27,7 @@ public abstract class Entity {
 		graphics.drawRect(hitbox.x, hitbox.y, width, height);
 		
 	}
+	
 	private void initHitbox() {
 		hitbox = new Rectangle((int) x, (int) y, width, height);
 	}
