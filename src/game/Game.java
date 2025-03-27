@@ -23,7 +23,7 @@ public class Game implements Runnable{
 	
 	public Game()
 	{
-		
+		playing = new Playing(this);
 		menu = new Menu(this);
 		initClassesAndGame();
 		gamePanel = new GamePanel(this);
@@ -35,6 +35,7 @@ public class Game implements Runnable{
 	
 	// initClasses before the game if neccesary
 	private void initClassesAndGame() {
+		playing.initClasses();
 		
 	}
 
@@ -54,7 +55,7 @@ public class Game implements Runnable{
 			menu.update();
 			break;
 		case PLAYING:
-			
+			playing.update();
 			break;
 		case QUIT:
 		default:
@@ -74,7 +75,7 @@ public class Game implements Runnable{
 			menu.draw(graphics);
 			break;
 		case PLAYING:
-		
+			playing.draw(graphics);
 			break;
 		case QUIT:
 		default:

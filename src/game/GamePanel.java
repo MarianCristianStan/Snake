@@ -4,6 +4,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import javax.swing.JPanel;
+import inputs.KeyboardInput;
+import inputs.MouseInput;
+
 
 public class GamePanel extends JPanel {
 
@@ -19,7 +22,8 @@ public class GamePanel extends JPanel {
 		setPanelSize();
 		this.setBackground(Color.BLACK);
 		this.setFocusable(true);
-
+		this.addKeyListener(new KeyboardInput(this));
+		this.addMouseListener(new MouseInput(this));
 	}
 
 	private void setPanelSize() {
