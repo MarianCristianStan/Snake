@@ -4,15 +4,16 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import javax.swing.JPanel;
+
+import gameStates.GameState;
 import inputs.KeyboardInput;
 import inputs.MouseInput;
-
 
 public class GamePanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	private static final int SCREEN_WIDTH = 1280;
-	private static final int SCREEN_HEIGHT = 960;
+	private static final int SCREEN_HEIGHT = 768;
 	private static final int UNIT_SIZE = 1;
 	private static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
 	private Game game;
@@ -22,6 +23,7 @@ public class GamePanel extends JPanel {
 		setPanelSize();
 		this.setBackground(Color.BLACK);
 		this.setFocusable(true);
+		this.setLayout(null);
 		this.addKeyListener(new KeyboardInput(this));
 		this.addMouseListener(new MouseInput(this));
 	}
@@ -31,24 +33,14 @@ public class GamePanel extends JPanel {
 		this.setMinimumSize(resolution);
 		this.setPreferredSize(resolution);
 		this.setMaximumSize(resolution);
-
-	}
-	
-	public void updateGame() {
-
 	}
 
 	@Override
-	public void paint(Graphics graphics) {
-
-		super.paint(graphics);
-		// draw(graphics);
+	protected void paintComponent(Graphics graphics) {
+		super.paintComponent(graphics);
 		game.render(graphics);
 	}
 
-	public void draw(Graphics graphics) {
-
-	}
 
 	public static int getScreenHeight() {
 		return SCREEN_HEIGHT;
@@ -69,5 +61,4 @@ public class GamePanel extends JPanel {
 	public Game getGame() {
 		return this.game;
 	}
-
 }
