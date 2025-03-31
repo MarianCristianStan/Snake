@@ -1,6 +1,8 @@
 package game;
 
 import java.awt.Graphics;
+
+import gameStates.EndGame;
 import gameStates.GameState;
 import gameStates.Menu;
 import gameStates.Playing;
@@ -19,12 +21,13 @@ public class Game implements Runnable{
 	//gameState 
 	private Playing playing;
 	private Menu menu;
-	
+	private EndGame endGame;
 	
 	public Game()
 	{
 		playing = new Playing(this);
 		menu = new Menu(this);
+		endGame = new EndGame(this);
 		initClassesAndGame();
 		gamePanel = new GamePanel(this);
 		gameFrame = new GameFrame(gamePanel);
@@ -39,6 +42,9 @@ public class Game implements Runnable{
 		
 	}
 
+	public GamePanel getGamePanel() {
+	    return this.gamePanel;
+	}
 
 	private void startGameLoop()
 	{
@@ -56,6 +62,9 @@ public class Game implements Runnable{
 			break;
 		case PLAYING:
 			playing.update();
+			break;
+		case ENDGAME:
+			endGame.update();
 			break;
 		case QUIT:
 		default:
@@ -76,6 +85,9 @@ public class Game implements Runnable{
 			break;
 		case PLAYING:
 			playing.draw(graphics);
+			break;
+		case ENDGAME:
+			endGame.draw(graphics);
 			break;
 		case QUIT:
 		default:
@@ -137,6 +149,9 @@ public class Game implements Runnable{
 
 	public Menu getMenu() {
 		return menu;
+	}
+	public EndGame getEndGame() {
+		return endGame;
 	}
 	
 
