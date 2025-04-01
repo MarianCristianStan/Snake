@@ -24,6 +24,7 @@ public class Menu extends State implements StateMethods {
     private JButton playButton;
     private JButton exitButton;
     private JButton[] menuButtons;
+    private JButton bestScoresButton;
     private int selectedIndex = 0;
     private boolean buttonsAdded = false;
 
@@ -57,9 +58,10 @@ public class Menu extends State implements StateMethods {
         int centerY = GamePanel.getScreenHeight() / 2 - 100;
 
         playButton = createModernButton("Play", centerX, centerY);
-        exitButton = createModernButton("Exit", centerX, centerY + 70);
+        bestScoresButton = createModernButton("Best Scores", centerX, centerY + 70);
+        exitButton = createModernButton("Exit", centerX, centerY + 140);
 
-        menuButtons = new JButton[]{playButton, exitButton};
+        menuButtons = new JButton[]{playButton, bestScoresButton, exitButton};
 
         playButton.addActionListener(e -> {
             GameState.state = GameState.PLAYING;
@@ -68,15 +70,23 @@ public class Menu extends State implements StateMethods {
             game.getGamePanel().requestFocusInWindow();
         });
 
+        bestScoresButton.addActionListener(e -> {
+            GameState.state = GameState.BESTSCORES;
+            removeButtons();
+            game.getGamePanel().requestFocusInWindow();
+        });
+
         exitButton.addActionListener(e -> System.exit(0));
 
         game.getGamePanel().add(playButton);
+        game.getGamePanel().add(bestScoresButton);
         game.getGamePanel().add(exitButton);
 
         updateButtonSelection();
 
         buttonsAdded = true;
     }
+
 
     private JButton createModernButton(String text, int x, int y) {
         JButton button = new JButton(text);
@@ -118,17 +128,18 @@ public class Menu extends State implements StateMethods {
             }
         }
     }
-
     private void removeButtons() {
         game.getGamePanel().remove(playButton);
+        game.getGamePanel().remove(bestScoresButton);
         game.getGamePanel().remove(exitButton);
         buttonsAdded = false;
         game.getGamePanel().repaint();
     }
 
+
     @Override
     public void update() {
-        // Not used for now
+       
     }
 
     @Override

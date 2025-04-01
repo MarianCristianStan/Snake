@@ -13,6 +13,7 @@ import javax.swing.JButton;
 
 import game.Game;
 import game.GamePanel;
+import utils.ScoreManager;
 import utils.SoundPlayer;
 
 public class EndGame extends State implements StateMethods{
@@ -92,6 +93,7 @@ public class EndGame extends State implements StateMethods{
 	    backToMenuButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
 	    backToMenuButton.addActionListener(e -> {
+	        ScoreManager.saveScore(fruitEaten); 
 	        GameState.state = GameState.MENU;
 	        game.getPlaying().restartGame();
 	        buttonAdded = false;
