@@ -13,7 +13,7 @@ public class GamePanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	private static final int SCREEN_WIDTH = 1280;
-	private static final int SCREEN_HEIGHT = 768;
+	private static final int SCREEN_HEIGHT = 960;
 	private static final int UNIT_SIZE = 1;
 	private static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
 	private Game game;

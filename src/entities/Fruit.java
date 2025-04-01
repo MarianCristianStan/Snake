@@ -1,17 +1,17 @@
 package entities;
 
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
 import javax.imageio.ImageIO;
 
 import game.GamePanel;
 import gameStates.Playing;
+import utils.PlayingUtils;
 
 public class Fruit extends Entity {
 
@@ -19,24 +19,33 @@ public class Fruit extends Entity {
 	private BufferedImage appleImage;
 	private BufferedImage pineappleImage;
 	private boolean isEated = false;
-	private Random random;
 	private String fruitType = "Apple";
-	private int randomCounterPineapple=5;
+	private float animationOffset = 0f;
+	private long animationStartTime = System.currentTimeMillis();
 
+	
 	public Fruit(float x, float y, int width, int height) {
 		super(x, y, width, height);
-		random = new Random();
 		loadFruit();
 		setFruitType("Apple");
 	}
 
 	public void render(Graphics graphics) {
-		if (fruitType.compareTo("Apple") == 0)
-			graphics.drawImage(appleImage, (int) x, (int) y, null);
-		else if (fruitType.compareTo("Pineapple") == 0)
-			graphics.drawImage(pineappleImage, (int) x, (int) y, null);
-		drawHitbox(graphics);
+	    long now = System.currentTimeMillis();
+	    float time = (now - animationStartTime) / 100.0f;
+	    animationOffset = (float) Math.sin(time) * 3; 
+
+	    int drawX = (int) x;
+	    int drawY = (int) (y + animationOffset);
+
+	    if (fruitType.equals("Apple"))
+	        graphics.drawImage(appleImage, drawX, drawY, null);
+	    else if (fruitType.equals("Pineapple"))
+	        graphics.drawImage(pineappleImage, drawX, drawY, null);
+
+//	     drawHitbox(graphics);
 	}
+
 
 	public void update() {
 
@@ -72,21 +81,10 @@ public class Fruit extends Entity {
 
 	public void newFruit() {
 
-		if (randomCounterPineapple == 0) {
-			this.fruitType = "Pineapple";
-			randomCounterPineapple = (ThreadLocalRandom.current().nextInt() % 4) + 4;
-
-		} else {
-			randomCounterPineapple--;
-			this.fruitType = "Apple";
-		}
-		Rectangle topBorder = Playing.getTopBorder();
-		Rectangle bottomBorder = Playing.getBottomBorder();
-		Rectangle leftBorder = Playing.getLeftBorder();
-		Rectangle rightBorder = Playing.getRightBorder();
-		x = random.nextInt((int) (rightBorder.x - leftBorder.x - 20)) + leftBorder.x;
-		y = random.nextInt((int) (bottomBorder.y - topBorder.y - 20)) + topBorder.y;
-
+		Point point = PlayingUtils.getValidRandomPosition(Playing.getTopBorder(), Playing.getBottomBorder(), Playing.getLeftBorder(), Playing.getRightBorder(), 24, 30);
+		x = point.x;
+		y = point.y;
+		updateHitbox();
 	}
 
 	public boolean getIsEated() {
@@ -111,6 +109,11 @@ public class Fruit extends Entity {
 
 	public void setFruitType(String fruitType) {
 		this.fruitType = fruitType;
+	}
+
+	public void setPosition(float newX, float newY) {
+		this.x = newX;
+		this.y = newY;
 	}
 
 }
