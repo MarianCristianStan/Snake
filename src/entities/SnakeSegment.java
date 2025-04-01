@@ -33,7 +33,6 @@ public class SnakeSegment extends Entity {
         float centerX = x + width / 2f;
         float centerY = y + height / 2f;
 
-        // dreptunghi de bază
         Path2D.Float rect = new Path2D.Float();
         rect.moveTo(-width / 2f, -height / 2f);
         rect.lineTo(width / 2f, -height / 2f);
@@ -41,7 +40,6 @@ public class SnakeSegment extends Entity {
         rect.lineTo(-width / 2f, height / 2f);
         rect.closePath();
 
-        // rotire și translație
         AffineTransform transform = new AffineTransform();
         transform.translate(centerX, centerY);
         transform.rotate(angle);
@@ -55,5 +53,12 @@ public class SnakeSegment extends Entity {
     public void drawRotatedHitbox(Graphics2D g2d, boolean isHead) {
         g2d.setColor(isHead ? Color.RED : Color.YELLOW);
         g2d.draw(rotatedHitbox);
+    }
+    
+    public float getX() {
+    	return x;
+    }
+    public float getY() {
+    	return y;
     }
 }

@@ -19,15 +19,14 @@ public abstract class Entity {
 		this.height = height;
 		initHitbox();
 	}
-	
-	// drawHitbox method only for debugging the hitbox 
-	protected void drawHitbox(Graphics graphics)
-	{
+
+	// drawHitbox method only for debugging the hitbox
+	protected void drawHitbox(Graphics graphics) {
 		graphics.setColor(Color.GREEN);
 		graphics.drawRect(hitbox.x, hitbox.y, width, height);
-		
+
 	}
-	
+
 	private void initHitbox() {
 		hitbox = new Rectangle((int) x, (int) y, width, height);
 	}

@@ -1,6 +1,7 @@
 package game;
 
 
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
@@ -17,6 +18,7 @@ public class GameFrame extends JFrame {
 		this.pack();
 		this.setVisible(true);
 		this.setLocationRelativeTo(null);
-
+		ImageIcon icon = new ImageIcon(getClass().getResource("/assets/ui/snakeIcon.png"));
+		this.setIconImage(icon.getImage());
 	}
 }
