@@ -140,7 +140,7 @@ public class Playing extends State implements StateMethods {
             drawBorders(graphics);
             graphics.drawImage(gameTitleImg, 0, 0, GamePanel.getScreenWidth(), 54, null);
             drawScore(graphics);
-            if (fruitEaten >= 6) {
+            if (fruitEaten >= 20) {
             	gameOver();
             }
         } else {
@@ -170,7 +170,7 @@ public class Playing extends State implements StateMethods {
 
     public void gameOver() {
         game.getEndGame().setFruitEaten(fruitEaten);
-        game.getEndGame().setVictory(fruitEaten >= 6); 
+        game.getEndGame().setVictory(fruitEaten >= 20); 
         GameState.state = GameState.ENDGAME;
     }
 
