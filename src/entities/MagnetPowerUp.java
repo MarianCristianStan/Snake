@@ -11,6 +11,7 @@ import java.io.InputStream;
 import javax.imageio.ImageIO;
 
 import utils.PlayingUtils;
+import utils.PowerUpSounds;
 
 public class MagnetPowerUp extends PowerUp {
 
@@ -39,11 +40,13 @@ public class MagnetPowerUp extends PowerUp {
 
     @Override
     public void applyToSnake(Snake snake) {
+    	PowerUpSounds.playCollect();
         snake.addHeldPowerUp(this);
         deactivate();
     }
 
     public void activate(Snake snake) {
+    	PowerUpSounds.playActivate();
         snake.activateMagnet(duration);
         this.used = true;
     }

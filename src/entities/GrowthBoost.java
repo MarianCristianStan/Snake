@@ -11,6 +11,7 @@ import java.io.InputStream;
 import javax.imageio.ImageIO;
 
 import utils.PlayingUtils;
+import utils.PowerUpSounds;
 
 public class GrowthBoost extends PowerUp {
 
@@ -60,6 +61,7 @@ public class GrowthBoost extends PowerUp {
 
 	@Override
 	public void applyToSnake(Snake snake) {
+		PowerUpSounds.playCollect();
 		snake.activateGrowthBoost(3, duration);
 		snake.activatePowerUp("Growth", duration);
 		deactivate();

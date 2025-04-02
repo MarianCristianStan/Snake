@@ -20,6 +20,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import gameStates.Playing;
+import utils.SoundPlayer;
 
 public class Snake extends Entity {
 
@@ -49,12 +50,14 @@ public class Snake extends Entity {
 	private long growthBoostEndTime = 0;
 	private boolean magnetActive = false;
 	private long magnetEndTime = 0;
-	
+
 	private boolean shieldActive = false;
 	private long shieldEndTime = 0;
 	private List<PowerUp> heldPowerUps = new ArrayList<>();
 
 	private Clip eatingSound;
+	private long lastShieldSoundTime = 0;
+	private final long SHIELD_SOUND_COOLDOWN_MS = 1000; 
 
 
 	public Snake(float x, float y, int width, int height) {
@@ -210,6 +213,29 @@ public class Snake extends Entity {
 			int radius = img.getWidth() + 12;
 			g2d.fillOval(cx - radius / 2, cy - radius / 2, radius, radius);
 		}
+		if (isHead && hasMagnet()) {
+			/* g2d.setColor(new Color(1f, 1f, 0f, 0.5f)); */
+
+			int rays = 10;
+			int length = 14;
+			int innerRadius = img.getWidth() / 2 + 2;
+
+			double baseAngle = System.currentTimeMillis() / 1000.0;
+			float dynamicAlpha = (float) (0.2 + 0.4 * (0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 300.0)));
+			g2d.setColor(new Color(1f, 1f, 0f, dynamicAlpha));
+
+			for (int i = 0; i < rays; i++) {
+				double angle = baseAngle + i * (2 * Math.PI / rays);
+				double cos = Math.cos(angle);
+				double sin = Math.sin(angle);
+
+				int x1 = (int) (cx + cos * innerRadius);
+				int y1 = (int) (cy + sin * innerRadius);
+				int x2 = (int) (cx + cos * (innerRadius + length));
+				int y2 = (int) (cy + sin * (innerRadius + length));
+				g2d.drawLine(x1, y1, x2, y2);
+			}
+		}
 
 		g2d.translate(cx, cy);
 		g2d.rotate(seg.angle);
@@ -232,9 +258,18 @@ public class Snake extends Entity {
 		SnakeSegment head = segments.get(0);
 
 		for (int i = 4; i < segments.size(); i++) {
-			if (head.intersects(segments.get(i).getHitbox()) && !hasShield()) {
-				isMoving = false;
-				return;
+			if (head.intersects(segments.get(i).getHitbox())) {
+				if (!hasShield()) {
+					isMoving = false;
+					return;
+				}else {
+					long now = System.currentTimeMillis();
+				    if (now - lastShieldSoundTime > SHIELD_SOUND_COOLDOWN_MS) {
+				        SoundPlayer.playSound("/assets/sounds/shield_block.wav");
+				        lastShieldSoundTime = now;
+				    }
+				}
+
 			}
 		}
 
@@ -250,8 +285,12 @@ public class Snake extends Entity {
 		if (head.intersects(left)) {
 			if (Playing.getLeftBorderColor().equals(Color.RED) && !hasShield()) {
 				collided = true;
-			} else {
 
+			} else {
+				if(hasShield() && Playing.getLeftBorderColor().equals(Color.RED))
+				{
+					SoundPlayer.playSound("/assets/sounds/shield_block.wav");
+				}
 				this.x = right.x - width - 1;
 				this.x += Math.cos(angle) * 4;
 				this.y += Math.sin(angle) * 4;
@@ -264,7 +303,12 @@ public class Snake extends Entity {
 		if (head.intersects(right)) {
 			if (Playing.getRightBorderColor().equals(Color.RED) && !hasShield()) {
 				collided = true;
+
 			} else {
+				if(hasShield() && Playing.getLeftBorderColor().equals(Color.RED))
+				{
+					SoundPlayer.playSound("/assets/sounds/shield_block.wav");
+				}
 				this.x = left.x + 1;
 				this.x += Math.cos(angle) * 4;
 				this.y += Math.sin(angle) * 4;
@@ -276,8 +320,14 @@ public class Snake extends Entity {
 		}
 		if (head.intersects(top)) {
 			if (Playing.getTopBorderColor().equals(Color.RED) && !hasShield()) {
+
 				collided = true;
+
 			} else {
+				if(hasShield() && Playing.getLeftBorderColor().equals(Color.RED))
+				{
+					SoundPlayer.playSound("/assets/sounds/shield_block.wav");
+				}
 				this.y = bottom.y - height - 1;
 				this.x += Math.cos(angle) * 4;
 				this.y += Math.sin(angle) * 4;
@@ -290,7 +340,12 @@ public class Snake extends Entity {
 		if (head.intersects(bottom)) {
 			if (Playing.getBottomBorderColor().equals(Color.RED) && !hasShield()) {
 				collided = true;
+
 			} else {
+				if(hasShield() && Playing.getLeftBorderColor().equals(Color.RED))
+				{
+					SoundPlayer.playSound("/assets/sounds/shield_block.wav");
+				}
 				this.y = top.y + 1;
 				this.x += Math.cos(angle) * 4;
 				this.y += Math.sin(angle) * 4;
@@ -342,18 +397,18 @@ public class Snake extends Entity {
 		}
 		return growthMultiplier;
 	}
+
 	public long getSpeedBoostEndTime() {
-	    return speedBoostEndTime;
+		return speedBoostEndTime;
 	}
 
 	public long getGrowthBoostEndTime() {
-	    return growthBoostEndTime;
+		return growthBoostEndTime;
 	}
 
 	public long getShieldEndTime() {
-	    return shieldEndTime;
+		return shieldEndTime;
 	}
-
 
 	public void addHeldPowerUp(PowerUp p) {
 		heldPowerUps.add(p);
@@ -361,36 +416,36 @@ public class Snake extends Entity {
 
 	public List<PowerUp> getHeldPowerUps() {
 		return heldPowerUps;
-		
-	}
 
+	}
 
 	public void resetPowerUps() {
-	    heldPowerUps.clear();
-	    activePowerUpName = null;
-	    speedMultiplier = 1.0f;
-	    growthMultiplier = 1;
-	    shieldActive = false;
-	    magnetActive = false;
-	    
-	    speedBoostEndTime = 0;
-	    growthBoostEndTime = 0;
-	    shieldEndTime = 0;
-	    magnetEndTime = 0;
+		heldPowerUps.clear();
+		activePowerUpName = null;
+		speedMultiplier = 1.0f;
+		growthMultiplier = 1;
+		shieldActive = false;
+		magnetActive = false;
+
+		speedBoostEndTime = 0;
+		growthBoostEndTime = 0;
+		shieldEndTime = 0;
+		magnetEndTime = 0;
 	}
+
 	public void activateMagnet(long duration) {
-	    magnetActive = true;
-	    magnetEndTime = System.currentTimeMillis() + duration;
+		magnetActive = true;
+		magnetEndTime = System.currentTimeMillis() + duration;
 	}
 
 	public boolean isMagnetActive() {
-	    return magnetActive && System.currentTimeMillis() < magnetEndTime;
+		return magnetActive && System.currentTimeMillis() < magnetEndTime;
 	}
 
 	public long getMagnetEndTime() {
-	    return magnetEndTime;
+		return magnetEndTime;
 	}
-	
+
 	public void activateShield(long duration) {
 		shieldActive = true;
 		shieldEndTime = System.currentTimeMillis() + duration;
@@ -403,9 +458,9 @@ public class Snake extends Entity {
 	public boolean hasMagnet() {
 		return magnetActive;
 	}
-	
+
 	public List<SnakeSegment> getSegments() {
-	    return segments;
+		return segments;
 	}
 
 	public void setLeftPressed(boolean value) {
