@@ -81,15 +81,8 @@ public class Snake extends Entity {
 	}
 
 	private void loadAssets() {
-		try {
-			File soundFile = new File("src/assets/sounds/eating.wav");
-			AudioInputStream stream = AudioSystem.getAudioInputStream(soundFile);
-			eatingSound = AudioSystem.getClip();
-			eatingSound.open(stream);
-		} catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
-			e.printStackTrace();
-		}
-
+		
+		eatingSound = SoundPlayer.getClip("/assets/sounds/eating.wav");
 		try {
 			InputStream headStream = getClass().getResourceAsStream("/assets/snake/snakeHead.png");
 			InputStream bodyStream = getClass().getResourceAsStream("/assets/snake/snakeBody.png");
