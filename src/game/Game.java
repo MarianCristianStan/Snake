@@ -5,6 +5,7 @@ import java.awt.Graphics;
 import gameStates.BestScores;
 import gameStates.EndGame;
 import gameStates.GameState;
+import gameStates.Instructions;
 import gameStates.Menu;
 import gameStates.Playing;
 
@@ -24,7 +25,7 @@ public class Game implements Runnable{
 	private Menu menu;
 	private EndGame endGame;
 	private BestScores bestScores;
-
+	private Instructions instructions;
 	
 	public Game()
 	{
@@ -35,6 +36,7 @@ public class Game implements Runnable{
 		gamePanel = new GamePanel(this);
 		gameFrame = new GameFrame(gamePanel);
 		bestScores = new BestScores(this);
+		instructions = new Instructions(this);
 
 		gamePanel.requestFocus();
 		startGameLoop();
@@ -74,7 +76,9 @@ public class Game implements Runnable{
 		case BESTSCORES:
 		    bestScores.update();
 		    break;
-
+		case INSTRUCTIONS:
+		    instructions.update();
+		    break;
 		case QUIT:
 		default:
 			System.exit(0);
@@ -101,7 +105,8 @@ public class Game implements Runnable{
 		case BESTSCORES:
 		    bestScores.draw(graphics);
 		    break;
-
+		case INSTRUCTIONS:
+			instructions.draw(graphics);
 		case QUIT:
 		default:
 			break;
@@ -168,6 +173,9 @@ public class Game implements Runnable{
 	}
 	public BestScores getBestScores() {
 	    return bestScores;
+	}
+	public Instructions getInstructions() {
+		return instructions;
 	}
 
 	

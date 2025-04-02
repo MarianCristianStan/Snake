@@ -27,12 +27,12 @@ public class EndGame extends State implements StateMethods{
 	
 	public EndGame(Game game) {
 		super(game);
-		// TODO Auto-generated constructor stub
+		
 	}
 
 	@Override
 	public void update() {
-		// TODO Auto-generated method stub
+		
 		
 	}
 	public void setFruitEaten(int fruitEaten) {

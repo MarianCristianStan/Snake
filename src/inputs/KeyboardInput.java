@@ -36,6 +36,9 @@ public class KeyboardInput implements KeyListener{
 		 case BESTSCORES:
 			 gamePanel.getGame().getBestScores().keyPressed(e);
 			break;
+		 case INSTRUCTIONS:
+			 gamePanel.getGame().getInstructions().keyPressed(e);
+			break;
 		default:
 			break;
 		
@@ -57,6 +60,9 @@ public class KeyboardInput implements KeyListener{
 			break;
 		 case BESTSCORES:
 			 gamePanel.getGame().getBestScores().keyPressed(e);
+			break;
+		 case INSTRUCTIONS:
+			 gamePanel.getGame().getInstructions().keyPressed(e);
 			break;
 		default:
 			break;

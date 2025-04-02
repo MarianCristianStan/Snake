@@ -30,6 +30,7 @@ import game.Game;
 import game.GamePanel;
 import utils.BorderState;
 import utils.PlayingUtils;
+import utils.SoundPlayer;
 
 public class Playing extends State implements StateMethods {
 
@@ -209,9 +210,11 @@ public class Playing extends State implements StateMethods {
 			drawPowerUpBar(graphics);
 
 			if (fruitEaten >= 20) {
+				SoundPlayer.playSound("/assets/sounds/winner.wav");
 				gameOver();
 			}
 		} else {
+			SoundPlayer.playSound("/assets/sounds/fail.wav");
 			gameOver();
 		}
 	}
@@ -590,6 +593,7 @@ public class Playing extends State implements StateMethods {
 		player = new Snake(200, 200, 24, 24);
 		player.resetPowerUps();
 		fruits.clear();
+		powerUps.clear();
 		Fruit fruit = new Fruit(300, 300, 24, 24);
 		fruit.setIsEated(false);
 		fruits.add(fruit);
