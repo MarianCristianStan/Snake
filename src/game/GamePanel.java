@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import javax.swing.JPanel;
 
 import gameStates.GameState;
+import inputs.ControllerInput;
 import inputs.KeyboardInput;
 import inputs.MouseInput;
 
@@ -17,6 +18,8 @@ public class GamePanel extends JPanel {
 	private static final int UNIT_SIZE = 1;
 	private static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
 	private Game game;
+	
+
 
 	public GamePanel(Game game) {
 		this.game = game;
@@ -26,6 +29,7 @@ public class GamePanel extends JPanel {
 		this.setLayout(null);
 		this.addKeyListener(new KeyboardInput(this));
 		this.addMouseListener(new MouseInput(this));
+		
 	}
 
 	private void setPanelSize() {
@@ -57,6 +61,8 @@ public class GamePanel extends JPanel {
 	public GamePanel getGamePanel() {
 		return this;
 	}
+	
+
 
 	public Game getGame() {
 		return this.game;

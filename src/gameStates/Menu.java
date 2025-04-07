@@ -7,6 +7,7 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import utils.SoundPlayer;
@@ -16,6 +17,7 @@ import javax.swing.JButton;
 
 import game.Game;
 import game.GamePanel;
+import inputs.ControllerManager;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -35,7 +37,8 @@ public class Menu extends State implements StateMethods {
     private Image keyboardImage; 
     private Image controllerImage; 
     private String inputType; 
-
+   
+    
     public Menu(Game game) {
         super(game);
         loadMenuBackground();
@@ -244,6 +247,20 @@ public class Menu extends State implements StateMethods {
         graphics.drawString(inputText, x + 40, y + 30);
     }
 
+    public void simulateKeyPress(char key) {
+        int keyCode = KeyEvent.getExtendedKeyCodeForChar(key);
+        if (keyCode == KeyEvent.VK_UNDEFINED) return;
+
+        KeyEvent fakeEvent = new KeyEvent(
+            game.getGamePanel(),
+            KeyEvent.KEY_PRESSED,
+            System.currentTimeMillis(),
+            0,
+            keyCode,
+            key
+        );
+        keyPressed(fakeEvent);
+    }
 
 
     @Override public void mouseClicked(MouseEvent e) {}

@@ -140,7 +140,21 @@ public class EndGame extends State implements StateMethods{
 		// TODO Auto-generated method stub
 		
 	}
+	public void simulateKeyPress(char key) {
+	    int keyCode = KeyEvent.getExtendedKeyCodeForChar(key);
+	    if (keyCode == KeyEvent.VK_UNDEFINED) return;
 
+	    KeyEvent fakeEvent = new KeyEvent(
+	        game.getGamePanel(),
+	        KeyEvent.KEY_PRESSED,
+	        System.currentTimeMillis(),
+	        0,
+	        keyCode,
+	        key
+	    );
+	    keyPressed(fakeEvent);
+	}
+	  
 	@Override
 	public void keyPressed(KeyEvent e) {
 	    switch (e.getKeyCode()) {

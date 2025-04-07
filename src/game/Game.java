@@ -8,6 +8,8 @@ import gameStates.GameState;
 import gameStates.Instructions;
 import gameStates.Menu;
 import gameStates.Playing;
+import inputs.ControllerInput;
+import inputs.ControllerManager;
 
 public class Game implements Runnable{
 	
@@ -27,6 +29,8 @@ public class Game implements Runnable{
 	private BestScores bestScores;
 	private Instructions instructions;
 	
+	private ControllerManager controllerManager;
+    
 	public Game()
 	{
 		playing = new Playing(this);
@@ -37,7 +41,7 @@ public class Game implements Runnable{
 		gameFrame = new GameFrame(gamePanel);
 		bestScores = new BestScores(this);
 		instructions = new Instructions(this);
-
+		controllerManager = new ControllerManager(this);
 		gamePanel.requestFocus();
 		startGameLoop();
 	
@@ -62,22 +66,28 @@ public class Game implements Runnable{
 	// update game using Game States
 	public void update()
 	{
+		controllerManager.update(); 
 		switch(GameState.state)
 		{
 		case MENU:
 			menu.update();
+			
 			break;
 		case PLAYING:
 			playing.update();
+			
 			break;
 		case ENDGAME:
 			endGame.update();
+		
 			break;
 		case BESTSCORES:
 		    bestScores.update();
+		  
 		    break;
 		case INSTRUCTIONS:
 		    instructions.update();
+		   
 		    break;
 		case QUIT:
 		default:
@@ -160,6 +170,7 @@ public class Game implements Runnable{
 		}
 	}
 
+	
 
 	public Playing getPlaying() {
 		return playing;
@@ -177,6 +188,7 @@ public class Game implements Runnable{
 	public Instructions getInstructions() {
 		return instructions;
 	}
+	
 
 	
 

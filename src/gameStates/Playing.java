@@ -28,6 +28,7 @@ import entities.SnakeSegment;
 import entities.SpeedBoost;
 import game.Game;
 import game.GamePanel;
+import inputs.ControllerInput;
 import utils.BorderState;
 import utils.PlayingUtils;
 import utils.SoundPlayer;
@@ -77,6 +78,9 @@ public class Playing extends State implements StateMethods {
 	private int pineappleCounter = 4;
 	private long lastPowerUpTime = 0;
 	private final long POWER_UP_INTERVAL = 14_000;
+	
+	
+
 
 	public Playing(Game game) {
 		super(game);
@@ -549,19 +553,26 @@ public class Playing extends State implements StateMethods {
 
 	}
 
+	public void simulateKeyPress(char key) {
+	    int keyCode = KeyEvent.getExtendedKeyCodeForChar(key);
+	    if (keyCode == KeyEvent.VK_UNDEFINED) return;
+
+	    KeyEvent fakeEvent = new KeyEvent(
+	        game.getGamePanel(),
+	        KeyEvent.KEY_PRESSED,
+	        System.currentTimeMillis(),
+	        0,
+	        keyCode,
+	        key
+	    );
+	    keyPressed(fakeEvent);
+	}
 	@Override
 	public void keyPressed(KeyEvent e) {
 		switch (e.getKeyCode()) {
 		case KeyEvent.VK_A -> player.setLeftPressed(true);
 		case KeyEvent.VK_D -> player.setRightPressed(true);
-		}
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e) {
-		switch (e.getKeyCode()) {
-		case KeyEvent.VK_A -> player.setLeftPressed(false);
-		case KeyEvent.VK_D -> player.setRightPressed(false);
+		
 		case KeyEvent.VK_E -> {
 			for (PowerUp pu : player.getHeldPowerUps()) {
 				if (!pu.isUsed() && pu instanceof ShieldPowerUp sp) {
@@ -579,9 +590,15 @@ public class Playing extends State implements StateMethods {
 		        }
 		    }
 		}
+		}
+	}
 
-
-
+	@Override
+	public void keyReleased(KeyEvent e) {
+		switch (e.getKeyCode()) {
+		case KeyEvent.VK_A -> player.setLeftPressed(false);
+		case KeyEvent.VK_D -> player.setRightPressed(false);
+		
 		}
 	}
 
