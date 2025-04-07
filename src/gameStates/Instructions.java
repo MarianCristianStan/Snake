@@ -134,6 +134,21 @@ public class Instructions extends State implements StateMethods {
         // Handle mouse move events if needed
     }
 
+    public void simulateKeyPress(char key) {
+        int keyCode = KeyEvent.getExtendedKeyCodeForChar(key);
+        if (keyCode == KeyEvent.VK_UNDEFINED) return;
+
+        KeyEvent fakeEvent = new KeyEvent(
+            game.getGamePanel(),
+            KeyEvent.KEY_PRESSED,
+            System.currentTimeMillis(),
+            0,
+            keyCode,
+            key
+        );
+        keyPressed(fakeEvent);
+    }
+    
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {

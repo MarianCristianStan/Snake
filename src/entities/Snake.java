@@ -425,6 +425,12 @@ public class Snake extends Entity {
 		shieldEndTime = 0;
 		magnetEndTime = 0;
 	}
+	public void setAngle(double angle) {
+	    this.angle = angle;
+	}
+	public double getAngle() {
+		return angle;
+	}
 
 	public void activateMagnet(long duration) {
 		magnetActive = true;
@@ -477,4 +483,6 @@ public class Snake extends Entity {
 		hitbox.x = (int) x;
 		hitbox.y = (int) y;
 	}
+
+	
 }
