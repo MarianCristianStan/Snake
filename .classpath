@@ -7,7 +7,7 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="C:/Users/neago/Desktop/IOC/Snake/libs/jna-platform-5.17.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/neago/Desktop/IOC/Snake/libs/jna-5.13.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/smari/Desktop/IOC/Snake/libs/jna-platform-5.17.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/smari/Desktop/IOC/Snake/libs/jna-5.13.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

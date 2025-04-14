@@ -83,7 +83,6 @@ public class Game implements Runnable{
 		
 	  controllerManager.update();
 	{
-		
 		switch(GameState.state)
 		{
 		case MENU:

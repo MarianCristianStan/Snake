@@ -41,48 +41,46 @@ public class ControllerManager {
 		    case ENDGAME -> handleEndGameInput();
 		    case BESTSCORES -> handleBestScoreInput();
 		    case INSTRUCTIONS -> handleInstructionsInput();
-
-	        case PLAYING -> {
-	            double x = controller.getNormLeftX();
-	            double y = controller.getNormLeftY();
-
-	            if (Math.abs(x) > 0.15 || Math.abs(y) > 0.15) {
-	                double targetAngle = Math.atan2(y, x);
-	                double currentAngle = game.getPlaying().getPlayer().getAngle();
-	                double deltaAngle = normalizeAngle(targetAngle - currentAngle);
-	                double maxTurnPerUpdate = Math.toRadians(3);
-
-	                if (Math.abs(deltaAngle) > maxTurnPerUpdate)
-	                    deltaAngle = Math.signum(deltaAngle) * maxTurnPerUpdate;
-
-	                double newAngle = normalizeAngle(currentAngle + deltaAngle);
-	                game.getPlaying().getPlayer().setAngle(newAngle);
-	            }
-
-	            long now = System.currentTimeMillis();
-	            if (now - lastSelectTime > SELECT_COOLDOWN) {
-	                if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_B)) {
-	                    game.getPlaying().activateShield();
-	                    lastSelectTime = now;
-	                }
-	                if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_X)) {
-	                	 game.getPlaying().activateMagnet();
-	                    lastSelectTime = now;
-	                }
-	            }
-	        }
-
+	        case PLAYING -> handlePlayingInput();
+	       
 	        case QUIT -> System.exit(0);
 	    }
 	
-	 
-
 	}
 
 	private boolean controllerIsAllowed() {
 	    return game.getSelectedInput() == InputType.CONTROLLER;
 	}
 
+	private void handlePlayingInput() {
+		  double x = controller.getNormLeftX();
+          double y = controller.getNormLeftY();
+
+          if (Math.abs(x) > 0.15 || Math.abs(y) > 0.15) {
+              double targetAngle = Math.atan2(y, x);
+              double currentAngle = game.getPlaying().getPlayer().getAngle();
+              double deltaAngle = normalizeAngle(targetAngle - currentAngle);
+              double maxTurnPerUpdate = Math.toRadians(3);
+
+              if (Math.abs(deltaAngle) > maxTurnPerUpdate)
+                  deltaAngle = Math.signum(deltaAngle) * maxTurnPerUpdate;
+
+              double newAngle = normalizeAngle(currentAngle + deltaAngle);
+              game.getPlaying().getPlayer().setAngle(newAngle);
+          }
+
+          long now = System.currentTimeMillis();
+          if (now - lastSelectTime > SELECT_COOLDOWN) {
+              if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_B)) {
+                  game.getPlaying().activateShield();
+                  lastSelectTime = now;
+              }
+              if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_X)) {
+              	 game.getPlaying().activateMagnet();
+                  lastSelectTime = now;
+              }
+          }
+	}
 	private void handleMenuInput() {
 		long now = System.currentTimeMillis();
 		double stickY = controller.getNormLeftY();
