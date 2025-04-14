@@ -28,9 +28,11 @@ public class Game implements Runnable{
 	private EndGame endGame;
 	private BestScores bestScores;
 	private Instructions instructions;
-	
+	private inputs.InputType selectedInput = inputs.InputType.KEYBOARD;
 	private ControllerManager controllerManager;
-    
+	private ControllerInput controllerInput = new ControllerInput();
+
+	
 	public Game()
 	{
 		playing = new Playing(this);
@@ -47,7 +49,16 @@ public class Game implements Runnable{
 	
 	}
 	
-	// initClasses before the game if neccesary
+	public void setSelectedInput(inputs.InputType input) {
+	    this.selectedInput = input;
+	}
+	public ControllerInput getControllerInput() {
+	    return controllerInput;
+	}
+	public inputs.InputType getSelectedInput() {
+	    return selectedInput;
+	}
+
 	private void initClassesAndGame() {
 		playing.initClasses();
 		
@@ -56,6 +67,10 @@ public class Game implements Runnable{
 	public GamePanel getGamePanel() {
 	    return this.gamePanel;
 	}
+	public ControllerManager getControllerManager() {
+	    return controllerManager;
+	}
+
 
 	private void startGameLoop()
 	{
@@ -64,9 +79,11 @@ public class Game implements Runnable{
 	}
 	
 	// update game using Game States
-	public void update()
+	public void update() {
+		
+	  controllerManager.update();
 	{
-		controllerManager.update(); 
+		
 		switch(GameState.state)
 		{
 		case MENU:
@@ -97,7 +114,7 @@ public class Game implements Runnable{
 		}
 	
 	}
-	
+	}
 	//render game using Game States
 	public void render(Graphics graphics)
 	{

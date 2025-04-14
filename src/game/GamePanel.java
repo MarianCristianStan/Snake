@@ -19,10 +19,9 @@ public class GamePanel extends JPanel {
 	private static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
 	private Game game;
 	
-
-
 	public GamePanel(Game game) {
 		this.game = game;
+		
 		setPanelSize();
 		this.setBackground(Color.BLACK);
 		this.setFocusable(true);
@@ -62,8 +61,6 @@ public class GamePanel extends JPanel {
 		return this;
 	}
 	
-
-
 	public Game getGame() {
 		return this.game;
 	}

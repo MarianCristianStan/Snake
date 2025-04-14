@@ -16,102 +16,137 @@ public class ControllerManager {
 
 	public ControllerManager(Game game) {
 		this.game = game;
-		this.controller = new ControllerInput();
+		this.controller = game.getControllerInput(); 
 	}
 
 	public void update() {
-		controller.updateControls();
+	    controller.updateControls();
+	    
+	    if (game.getSelectedInput() == InputType.CONTROLLER && !controller.isConnected()) {
+	        System.out.println("⚠️ Controller disconnected. Switching to keyboard.");
+	        game.setSelectedInput(InputType.KEYBOARD);
+	        return;
+	    }
 
-		if (GameState.state == GameState.PLAYING) {
-			double x = controller.getNormLeftX();
-			double y = controller.getNormLeftY();
+	    if (controller.isButtonPressed(5)) {
+	        game.setSelectedInput(InputType.KEYBOARD);
+	        lastSelectTime = System.currentTimeMillis();
+	        System.out.println("Switched to KEYBOARD via B");
+	    }
 
+	    if (!controllerIsAllowed()) return;
+
+	    switch (GameState.state) {
+		    case MENU -> handleMenuInput();
+		    case ENDGAME -> handleEndGameInput();
+		    case BESTSCORES -> handleBestScoreInput();
+		    case INSTRUCTIONS -> handleInstructionsInput();
+
+	        case PLAYING -> {
+	            double x = controller.getNormLeftX();
+	            double y = controller.getNormLeftY();
+
+	            if (Math.abs(x) > 0.15 || Math.abs(y) > 0.15) {
+	                double targetAngle = Math.atan2(y, x);
+	                double currentAngle = game.getPlaying().getPlayer().getAngle();
+	                double deltaAngle = normalizeAngle(targetAngle - currentAngle);
+	                double maxTurnPerUpdate = Math.toRadians(3);
+
+	                if (Math.abs(deltaAngle) > maxTurnPerUpdate)
+	                    deltaAngle = Math.signum(deltaAngle) * maxTurnPerUpdate;
+
+	                double newAngle = normalizeAngle(currentAngle + deltaAngle);
+	                game.getPlaying().getPlayer().setAngle(newAngle);
+	            }
+
+	            long now = System.currentTimeMillis();
+	            if (now - lastSelectTime > SELECT_COOLDOWN) {
+	                if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_B)) {
+	                    game.getPlaying().activateShield();
+	                    lastSelectTime = now;
+	                }
+	                if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_X)) {
+	                	 game.getPlaying().activateMagnet();
+	                    lastSelectTime = now;
+	                }
+	            }
+	        }
+
+	        case QUIT -> System.exit(0);
+	    }
 	
-			if (Math.abs(x) > 0.15 || Math.abs(y) > 0.15) {
-			    double targetAngle = Math.atan2(y, x);
-			    double currentAngle = game.getPlaying().getPlayer().getAngle();
+	 
 
-			    double deltaAngle = normalizeAngle(targetAngle - currentAngle);
-
-			   
-			    double maxAllowedChange = Math.toRadians(120);
-			    if (Math.abs(deltaAngle) > maxAllowedChange) {
-			        return;
-			    }
-
-			  
-			    double maxTurnPerUpdate = Math.toRadians(3);
-			    if (Math.abs(deltaAngle) > maxTurnPerUpdate) {
-			        deltaAngle = Math.signum(deltaAngle) * maxTurnPerUpdate;
-			    }
-
-			    double newAngle = normalizeAngle(currentAngle + deltaAngle);
-			    game.getPlaying().getPlayer().setAngle(newAngle);
-			}
-
-			long now = System.currentTimeMillis();
-			if (now - lastSelectTime > SELECT_COOLDOWN) {
-				if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_B)) {
-					simulateKeyPress(game.getPlaying(), 'E');
-					lastSelectTime = now;
-				}
-
-				if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_X)) {
-					simulateKeyPress(game.getPlaying(), 'Q');
-					lastSelectTime = now;
-				}
-			}
-
-		}
-
-		if (GameState.state == GameState.MENU) {
-			handleMenuInput(game.getMenu());
-		} else if (GameState.state == GameState.ENDGAME) {
-			handleMenuInput(game.getEndGame());
-		} else if (GameState.state == GameState.BESTSCORES) {
-			handleMenuInput(game.getBestScores());
-		} else if (GameState.state == GameState.INSTRUCTIONS) {
-			handleMenuInput(game.getInstructions());
-		}
 	}
 
-	private void handleMenuInput(Object menuState) {
+	private boolean controllerIsAllowed() {
+	    return game.getSelectedInput() == InputType.CONTROLLER;
+	}
+
+	private void handleMenuInput() {
 		long now = System.currentTimeMillis();
 		double stickY = controller.getNormLeftY();
-
+	
 		if (now - lastMenuMoveTime > MENU_COOLDOWN) {
 			if (stickY < -0.5 || controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_DPAD_UP)) {
-				simulateKeyPress(menuState, 'W');
+				game.getMenu().moveCursorUp();
 				lastMenuMoveTime = now;
 			} else if (stickY > 0.5 || controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_DPAD_DOWN)) {
-				simulateKeyPress(menuState, 'S');
+				game.getMenu().moveCursorDown();
 				lastMenuMoveTime = now;
 			}
 		}
-
 		if (now - lastSelectTime > SELECT_COOLDOWN) {
 			if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_A)) {
-				simulateKeyPress(menuState, '\n');
-				lastSelectTime = now;
-			}
-			if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_Y)) {
-				simulateKeyPress(menuState, (char) 27);
+				game.getMenu().doSelect();
 				lastSelectTime = now;
 			}
 		}
 	}
+	
+	private void handleBestScoreInput() {
+		long now = System.currentTimeMillis();
+		
+		if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_Y)) {
+			game.getBestScores().returnMenu();
+			lastSelectTime = now;
+		}
+	}
+	
+	private void handleInstructionsInput() {
+		long now = System.currentTimeMillis();
+		
+			if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_Y)) {
+				game.getInstructions().returnMenu();
+				lastSelectTime = now;
+			}
+		}
+	
+	
+	private void handleEndGameInput() {
+		long now = System.currentTimeMillis();
+		double stickY = controller.getNormLeftY();
+	
+		if (now - lastMenuMoveTime > MENU_COOLDOWN) {
+			if (stickY > 0.5 || controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_DPAD_DOWN)) {
+				game.getEndGame().moveCursorDown();
+				lastMenuMoveTime = now;
+			}
+		}
+		if (now - lastSelectTime > SELECT_COOLDOWN) {
+			if (controller.isButtonPressed(ControllerInput.SDL_GAMEPAD_BUTTON_A)) {
+				game.getEndGame().doSelect();
+				lastSelectTime = now;
+			}
+		
+		}
+	}
+	
 
 	private double normalizeAngle(double angle) {
 	    while (angle < -Math.PI) angle += 2 * Math.PI;
 	    while (angle > Math.PI) angle -= 2 * Math.PI;
 	    return angle;
 	}
-	
-	private void simulateKeyPress(Object state, char key) {
-		try {
-			state.getClass().getMethod("simulateKeyPress", char.class).invoke(state, key);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+
 }

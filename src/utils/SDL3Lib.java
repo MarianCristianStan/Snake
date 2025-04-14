@@ -15,7 +15,9 @@ public interface SDL3Lib extends Library {
     Pointer SDL_GetGamepads(IntByReference count);
     Pointer SDL_OpenGamepad(int instance_id);
     void SDL_CloseGamepad(Pointer gamepad);
+    void SDL_PumpEvents();
 
+   
     short SDL_GetGamepadAxis(Pointer gamepad, int axis);
     boolean SDL_GetGamepadButton(Pointer gamepad, int button);
 
