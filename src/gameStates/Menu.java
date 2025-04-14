@@ -10,17 +10,15 @@ import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import utils.SoundPlayer;
+import java.io.InputStream;
+import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-
+import inputs.InputType;
 import game.Game;
 import game.GamePanel;
-import inputs.ControllerManager;
-
-import java.io.InputStream;
-import java.io.IOException;
+import utils.SoundPlayer;
 
 public class Menu extends State implements StateMethods {
 
@@ -34,17 +32,16 @@ public class Menu extends State implements StateMethods {
 
     private Image menuBackground;
     private Image btnBackground;
-    private Image keyboardImage; 
-    private Image controllerImage; 
-    private String inputType; 
-   
+    private Image keyboardImage;
+    private Image controllerImage;
+    
+
     
     public Menu(Game game) {
         super(game);
         loadMenuBackground();
-        loadKeyboardImage(); 
-        loadControllerImage(); 
-        inputType = "KEYBOARD"; 
+        loadKeyboardImage();
+        loadControllerImage();
     }
 
     private void loadMenuBackground() {
@@ -147,18 +144,17 @@ public class Menu extends State implements StateMethods {
         button.setOpaque(true);
 
         button.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseEntered(MouseEvent e) {
                 button.setBackground(new Color(0, 102, 204));
             }
-
+            @Override
             public void mouseExited(MouseEvent e) {
-              
                 if (button != menuButtons[selectedIndex]) {
                     button.setBackground(new Color(30, 144, 255));
                 }
             }
         });
-
         return button;
     }
 
@@ -186,71 +182,86 @@ public class Menu extends State implements StateMethods {
 
     @Override
     public void update() {
-        // Update logic if needed
+        game.getControllerInput().updateControls(); 
+
+        if (game.getSelectedInput() == InputType.CONTROLLER && game.getControllerInput().isButtonPressed(1)) {
+            game.setSelectedInput(InputType.KEYBOARD);
+            System.out.println("Switched to KEYBOARD via B");
+            return;
+        }
     }
 
+
+    public void moveCursorUp() {
+    	selectedIndex = (selectedIndex - 1 + menuButtons.length) % menuButtons.length;
+        SoundPlayer.playSound("/assets/sounds/menu_select.wav");
+        updateButtonSelection();
+    }
+
+    public void moveCursorDown() {
+    	 selectedIndex = (selectedIndex + 1) % menuButtons.length;
+         SoundPlayer.playSound("/assets/sounds/menu_select.wav");
+         updateButtonSelection();
+    }
+    public void doSelect() {
+    	menuButtons[selectedIndex].doClick();
+        SoundPlayer.playSound("/assets/sounds/enter.wav");
+    	
+    }
+    
+    
+    
     @Override
     public void draw(Graphics graphics) {
         if (menuBackground != null) {
             graphics.drawImage(menuBackground, 0, 0, GamePanel.getScreenWidth(), GamePanel.getScreenHeight(), null);
         }
-
-        if (btnBackground != null) {
+        if (btnBgStreamNotNull(btnBackground)) {
             graphics.drawImage(btnBackground,
                     GamePanel.getScreenWidth() / 2 - 700,
                     GamePanel.getScreenHeight() / 2 - 300,
                     600, 600, null);
         }
-
         if (!buttonsAdded) {
             initButtons();
         }
-
-        int padding = 10; 
+        int padding = 10;
         int x = GamePanel.getScreenWidth() - 350 - padding;
         int y = padding;
-        int width = 350; 
-        int height = 120; 
-
-        graphics.setColor(new Color(0, 0, 0, 100)); 
-        graphics.fillRoundRect(x + 5, y + 5, width, height, 20, 20); 
-
+        int width = 350;
+        int height = 120;
+        graphics.setColor(new Color(0, 0, 0, 100));
+        graphics.fillRoundRect(x + 5, y + 5, width, height, 20, 20);
         Graphics2D g2d = (Graphics2D) graphics;
         GradientPaint gradient = new GradientPaint(
-                x, y, new Color(30, 144, 255), 
-                x, y + height, new Color(0, 102, 204) 
+                x, y, new Color(30, 144, 255),
+                x, y + height, new Color(0, 102, 204)
         );
         g2d.setPaint(gradient);
-        g2d.fillRoundRect(x, y, width, height, 30, 30); 
-
-        // Set text and image based on input type
+        g2d.fillRoundRect(x, y, width, height, 30, 30);
+     
         String inputText;
-        if (inputType.equals("KEYBOARD")) {
+        if (game.getSelectedInput() == InputType.KEYBOARD) {
             inputText = "You are currently using the KEYBOARD";
-            if (keyboardImage != null) {
-                graphics.drawImage(keyboardImage, x + 170, y + 60, 40, 40, null); 
-            } else {
-                System.err.println("Keyboard image is null!");
-            }
+            if (keyboardImage != null)
+                graphics.drawImage(keyboardImage, x + 170, y + 60, 40, 40, null);
         } else {
             inputText = "You are currently using the CONTROLLER";
-            if (controllerImage != null) {
-                graphics.drawImage(controllerImage, x + 170, y + 60, 40, 40, null); 
-            } else {
-                System.err.println("Controller image is null!");
-            }
+            if (controllerImage != null)
+                graphics.drawImage(controllerImage, x + 170, y + 60, 40, 40, null);
         }
-
-        // Draw the input type text
-        graphics.setColor(Color.WHITE); 
+        graphics.setColor(Color.WHITE);
         graphics.setFont(new Font("Segoe UI", Font.BOLD, 16));
         graphics.drawString(inputText, x + 40, y + 30);
+    }
+    
+    private boolean btnBgStreamNotNull(Image img) {
+        return img != null;
     }
 
     public void simulateKeyPress(char key) {
         int keyCode = KeyEvent.getExtendedKeyCodeForChar(key);
         if (keyCode == KeyEvent.VK_UNDEFINED) return;
-
         KeyEvent fakeEvent = new KeyEvent(
             game.getGamePanel(),
             KeyEvent.KEY_PRESSED,
@@ -262,35 +273,43 @@ public class Menu extends State implements StateMethods {
         keyPressed(fakeEvent);
     }
 
-
-    @Override public void mouseClicked(MouseEvent e) {}
-    @Override public void mousePressed(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e) {}
-    @Override public void mouseMoved(MouseEvent e) {}
+    
+    @Override 
+    public void mouseClicked(java.awt.event.MouseEvent e) { }
+    @Override 
+    public void mousePressed(java.awt.event.MouseEvent e) { }
+    @Override 
+    public void mouseReleased(java.awt.event.MouseEvent e) { }
+    @Override 
+    public void mouseMoved(java.awt.event.MouseEvent e) { }
 
     @Override
-    public void keyPressed(java.awt.event.KeyEvent e) {
-        inputType = "KEYBOARD"; 
-
-        switch (e.getKeyCode()) {
-            case java.awt.event.KeyEvent.VK_W -> {
-                selectedIndex = (selectedIndex - 1 + menuButtons.length) % menuButtons.length;
-                SoundPlayer.playSound("/assets/sounds/menu_select.wav");
-
-                updateButtonSelection();
+    public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_H) {
+            if (game.getControllerInput().isConnected()) {
+                game.setSelectedInput(InputType.CONTROLLER);
+                System.out.println("Switched to CONTROLLER via key H");
+            } else {
+                System.out.println("No controller connected — staying on KEYBOARD");
             }
-            case java.awt.event.KeyEvent.VK_S -> {
-                selectedIndex = (selectedIndex + 1) % menuButtons.length;
-                SoundPlayer.playSound("/assets/sounds/menu_select.wav");
+            return;
+        }
 
-                updateButtonSelection();
-            }
-            case java.awt.event.KeyEvent.VK_ENTER -> {
-                menuButtons[selectedIndex].doClick();
-                SoundPlayer.playSound("/assets/sounds/enter.wav");
+        if (game.getSelectedInput() != InputType.CONTROLLER) {
+            switch (e.getKeyCode()) {
+                case KeyEvent.VK_W -> {
+                   moveCursorUp();
+                }
+                case KeyEvent.VK_S -> {
+                  moveCursorDown();
+                }
+                case KeyEvent.VK_ENTER -> {
+                    doSelect();
+                }
             }
         }
     }
 
-    @Override public void keyReleased(java.awt.event.KeyEvent e) {}
+    @Override 
+    public void keyReleased(java.awt.event.KeyEvent e) { }
 }

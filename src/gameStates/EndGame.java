@@ -159,22 +159,32 @@ public class EndGame extends State implements StateMethods{
 	public void keyPressed(KeyEvent e) {
 	    switch (e.getKeyCode()) {
 	        case KeyEvent.VK_S -> {
-	            if (!isSelected) {
-	                isSelected = true;
-	                updateButtonStyle();
-	                SoundPlayer.playSound("/assets/sounds/menu_select.wav");
-	            }
+	        	moveCursorDown();
 	        }
 	        case KeyEvent.VK_ENTER -> {
-	            if (isSelected) {
-	                SoundPlayer.playSound("/assets/sounds/enter.wav");
-	                backToMenuButton.doClick();
-	            }
+	        	doSelect();
 	        }
 	    }
 	}
+	public void doSelect() {
+		 if (isSelected) {
+             SoundPlayer.playSound("/assets/sounds/enter.wav");
+             backToMenuButton.doClick();
+         }
+		
+	}
+
+	public void moveCursorDown() {
+		  if (!isSelected) {
+              isSelected = true;
+              updateButtonStyle();
+              SoundPlayer.playSound("/assets/sounds/menu_select.wav");
+          }
+		
+	}
 
 
+	
 
 
 
@@ -184,4 +194,5 @@ public class EndGame extends State implements StateMethods{
 		
 	}
 
+	
 }

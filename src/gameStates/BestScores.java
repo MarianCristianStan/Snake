@@ -142,9 +142,14 @@ public class BestScores extends State implements StateMethods {
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            SoundPlayer.playSound("/assets/sounds/menu_select.wav");
-            GameState.state = GameState.MENU;
+            returnMenu();
         }
+    }
+    public void returnMenu()
+    {
+    	  SoundPlayer.playSound("/assets/sounds/menu_select.wav");
+          GameState.state = GameState.MENU;
+      
     }
 
     @Override public void keyReleased(KeyEvent e) {}

@@ -29,6 +29,7 @@ import entities.SpeedBoost;
 import game.Game;
 import game.GamePanel;
 import inputs.ControllerInput;
+import inputs.InputType;
 import utils.BorderState;
 import utils.PlayingUtils;
 import utils.SoundPlayer;
@@ -60,6 +61,7 @@ public class Playing extends State implements StateMethods {
 	private static long bottomDangerStart = 0;
 	private static long leftDangerStart = 0;
 	private static long rightDangerStart = 0;
+	private final ControllerInput controllerInput;
 
 	private final int DANGER_DURATION = 7000;
 
@@ -78,13 +80,21 @@ public class Playing extends State implements StateMethods {
 	private int pineappleCounter = 4;
 	private long lastPowerUpTime = 0;
 	private final long POWER_UP_INTERVAL = 14_000;
+	private inputs.InputType selectedInput = inputs.InputType.KEYBOARD;
+
+	public void setSelectedInput(inputs.InputType input) {
+	    this.selectedInput = input;
+	}
 	
-	
+	private boolean isUsingController() {
+	    return selectedInput == inputs.InputType.CONTROLLER;
+	}
 
 
 	public Playing(Game game) {
-		super(game);
-		initClasses();
+	    super(game);
+	    this.controllerInput = game.getControllerInput(); // 👈
+	    initClasses();
 	}
 
 	public void initClasses() {
@@ -171,31 +181,39 @@ public class Playing extends State implements StateMethods {
 
 	@Override
 	public void update() {
-		spawnMoreFruits();
-		checkFruit();
-		checkMagnetPowerUp();
-		borderChange();
-		player.update();
-		for (Fruit f : fruits) {
-			f.update();
-		}
+	    controllerInput.updateControls();
 
-		long now = System.currentTimeMillis();
-		if (now - lastPowerUpTime > POWER_UP_INTERVAL) {
-			spawnRandomPowerUp();
-			lastPowerUpTime = now;
-		}
 
-		Iterator<PowerUp> iterator = powerUps.iterator();
-		while (iterator.hasNext()) {
-			PowerUp pu = iterator.next();
-			if (pu.getHitbox().intersects(player.getHitbox())) {
-				pu.applyToSnake(player);
-				iterator.remove();
-			}
-		}
+	    // Game logic
+	    spawnMoreFruits();
+	    checkFruit();
+	    checkMagnetPowerUp();
+	    borderChange();
+	    player.update();
+	    for (Fruit f : fruits) f.update();
 
+	    long now = System.currentTimeMillis();
+	    if (now - lastPowerUpTime > POWER_UP_INTERVAL) {
+	        spawnRandomPowerUp();
+	        lastPowerUpTime = now;
+	    }
+
+	    Iterator<PowerUp> iterator = powerUps.iterator();
+	    while (iterator.hasNext()) {
+	        PowerUp pu = iterator.next();
+	        if (pu.getHitbox().intersects(player.getHitbox())) {
+	            pu.applyToSnake(player);
+	            iterator.remove();
+	        }
+	    }
 	}
+
+	private double normalizeAngle(double angle) {
+	    while (angle < -Math.PI) angle += 2 * Math.PI;
+	    while (angle > Math.PI) angle -= 2 * Math.PI;
+	    return angle;
+	}
+
 
 	@Override
 	public void draw(Graphics graphics) {
@@ -533,6 +551,7 @@ public class Playing extends State implements StateMethods {
 		GameState.state = GameState.ENDGAME;
 	}
 
+
 	@Override
 	public void mouseClicked(MouseEvent e) {
 
@@ -567,30 +586,53 @@ public class Playing extends State implements StateMethods {
 	    );
 	    keyPressed(fakeEvent);
 	}
+
 	@Override
 	public void keyPressed(KeyEvent e) {
-		switch (e.getKeyCode()) {
-		case KeyEvent.VK_A -> player.setLeftPressed(true);
-		case KeyEvent.VK_D -> player.setRightPressed(true);
-		
-		case KeyEvent.VK_E -> {
-			for (PowerUp pu : player.getHeldPowerUps()) {
-				if (!pu.isUsed() && pu instanceof ShieldPowerUp sp) {
-					sp.activate(player);
-					break;
-				}
+	   
+		if (e.getKeyCode() == KeyEvent.VK_H) {
+		     game.setSelectedInput(InputType.CONTROLLER);
+		     System.out.println("Switched to CONTROLLER via key H");
+		     return;
+		}
 
-			}
-		}
-		case KeyEvent.VK_Q -> {
-		    for (PowerUp pu : player.getHeldPowerUps()) {
-		        if (pu instanceof MagnetPowerUp mp && !mp.isUsed()) {
-		            mp.activate(player);
-		            break;
-		        }
-		    }
-		}
-		}
+
+		if (game.getSelectedInput() != InputType.KEYBOARD)
+		    return;
+
+	    switch (e.getKeyCode()) {
+	        case KeyEvent.VK_A -> player.setLeftPressed(true);
+	        case KeyEvent.VK_D -> player.setRightPressed(true);
+
+	        case KeyEvent.VK_E -> {
+	        	activateShield();
+	        }
+
+	        case KeyEvent.VK_Q -> {
+	        	activateMagnet();
+	        }
+	    }
+	}
+
+
+	public void activateShield() {
+		 for (PowerUp pu : player.getHeldPowerUps()) {
+             if (!pu.isUsed() && pu instanceof ShieldPowerUp sp) {
+                 sp.activate(player);
+                 break;
+             }
+         }
+		
+	}
+
+	public void activateMagnet() {
+		for (PowerUp pu : player.getHeldPowerUps()) {
+            if (pu instanceof MagnetPowerUp mp && !mp.isUsed()) {
+                mp.activate(player);
+                break;
+            }
+        }
+		
 	}
 
 	@Override
@@ -640,6 +682,7 @@ public class Playing extends State implements StateMethods {
 		setLeftBorderColor(Color.GREEN);
 		setRightBorderColor(Color.GREEN);
 	}
+
 
 	public Snake getPlayer() {
 		return this.player;
@@ -692,4 +735,6 @@ public class Playing extends State implements StateMethods {
 	public static void setRightBorderColor(Color color) {
 		rightBorderColor = color;
 	}
+
+
 }
