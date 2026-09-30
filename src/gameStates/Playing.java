@@ -1,6 +1,6 @@
 package gameStates;
 
-import java.awt.FontMetrics;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -10,13 +10,10 @@ import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.InputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import javax.imageio.ImageIO;
 
 import entities.Fruit;
 import entities.GrowthBoost;
@@ -36,24 +33,32 @@ import utils.SoundPlayer;
 
 public class Playing extends State implements StateMethods {
 
+	private static final int ARENA_MARGIN = 30;
+	private static final int ARENA_TOP = 84;
+	private static final int ARENA_BOTTOM_MARGIN = 34;
+
+	private static final Color BORDER_IDLE = new Color(70, 150, 85);
+	private static final Color BORDER_WARNING = new Color(220, 170, 60);
+	private static final Color BORDER_DANGER = new Color(180, 55, 45);
+
 	// Borders
 	private static Rectangle topBorder;
-	private static Color topBorderColor = Color.GREEN;
+	private static Color topBorderColor = BORDER_IDLE;
 	private static BorderState topState = BorderState.IDLE;
 	private static long topWarningStart = 0;
 
 	private static Rectangle bottomBorder;
-	private static Color bottomBorderColor = Color.GREEN;
+	private static Color bottomBorderColor = BORDER_IDLE;
 	private static BorderState bottomState = BorderState.IDLE;
 	private static long bottomWarningStart = 0;
 
 	private static Rectangle leftBorder;
-	private static Color leftBorderColor = Color.GREEN;
+	private static Color leftBorderColor = BORDER_IDLE;
 	private static BorderState leftState = BorderState.IDLE;
 	private static long leftWarningStart = 0;
 
 	private static Rectangle rightBorder;
-	private static Color rightBorderColor = Color.GREEN;
+	private static Color rightBorderColor = BORDER_IDLE;
 	private static BorderState rightState = BorderState.IDLE;
 	private static long rightWarningStart = 0;
 
@@ -67,7 +72,7 @@ public class Playing extends State implements StateMethods {
 
 	// Game logic
 	private long startTime;
-	private BufferedImage gameTitleImg;
+
 	private int fruitEaten;
 
 	// Entities
@@ -80,25 +85,15 @@ public class Playing extends State implements StateMethods {
 	private int pineappleCounter = 4;
 	private long lastPowerUpTime = 0;
 	private final long POWER_UP_INTERVAL = 14_000;
-	private inputs.InputType selectedInput = inputs.InputType.KEYBOARD;
-
-	public void setSelectedInput(inputs.InputType input) {
-	    this.selectedInput = input;
-	}
-	
-	private boolean isUsingController() {
-	    return selectedInput == inputs.InputType.CONTROLLER;
-	}
-
 
 	public Playing(Game game) {
-	    super(game);
-	    this.controllerInput = game.getControllerInput(); // 👈
-	    initClasses();
+		super(game);
+		this.controllerInput = game.getControllerInput(); // 👈
+		initClasses();
 	}
 
 	public void initClasses() {
-		player = new Snake(200, 200, 24, 24);
+		player = new Snake(200, 200, 24, 24, 4);
 		fruits.clear();
 		Fruit fruit = new Fruit(300, 300, 24, 24);
 		fruit.setIsEated(false);
@@ -143,24 +138,16 @@ public class Playing extends State implements StateMethods {
 	}
 
 	public void loadInterface() {
-		topBorder = new Rectangle(30, 84, GamePanel.getScreenWidth() - 60, 2);
-		bottomBorder = new Rectangle(30, GamePanel.getScreenHeight() - 34, GamePanel.getScreenWidth() - 60, 2);
-		leftBorder = new Rectangle(30, 84, 2, GamePanel.getScreenHeight() - 115);
-		rightBorder = new Rectangle(GamePanel.getScreenWidth() - 30, 84, 2, GamePanel.getScreenHeight() - 115);
+		topBorder = new Rectangle(ARENA_MARGIN, ARENA_TOP, GamePanel.getScreenWidth() - ARENA_MARGIN * 2, 2);
 
-		InputStream gameTitleStream = getClass().getResourceAsStream("/assets/ui/snaketitle.jpg");
-		try {
-			gameTitleImg = ImageIO.read(gameTitleStream);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (gameTitleStream != null)
-					gameTitleStream.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		bottomBorder = new Rectangle(ARENA_MARGIN, GamePanel.getScreenHeight() - ARENA_BOTTOM_MARGIN,
+				GamePanel.getScreenWidth() - ARENA_MARGIN * 2, 2);
+
+		leftBorder = new Rectangle(ARENA_MARGIN, ARENA_TOP, 2,
+				GamePanel.getScreenHeight() - ARENA_TOP - ARENA_BOTTOM_MARGIN);
+
+		rightBorder = new Rectangle(GamePanel.getScreenWidth() - ARENA_MARGIN, ARENA_TOP, 2,
+				GamePanel.getScreenHeight() - ARENA_TOP - ARENA_BOTTOM_MARGIN);
 	}
 
 	public void borderChange() {
@@ -181,42 +168,44 @@ public class Playing extends State implements StateMethods {
 
 	@Override
 	public void update() {
-	    controllerInput.updateControls();
+		controllerInput.updateControls();
 
+		// Game logic
+		spawnMoreFruits();
+		checkFruit();
+		checkMagnetPowerUp();
+		borderChange();
+		player.update();
+		for (Fruit f : fruits)
+			f.update();
 
-	    // Game logic
-	    spawnMoreFruits();
-	    checkFruit();
-	    checkMagnetPowerUp();
-	    borderChange();
-	    player.update();
-	    for (Fruit f : fruits) f.update();
+		long now = System.currentTimeMillis();
+		if (now - lastPowerUpTime > POWER_UP_INTERVAL) {
+			spawnRandomPowerUp();
+			lastPowerUpTime = now;
+		}
 
-	    long now = System.currentTimeMillis();
-	    if (now - lastPowerUpTime > POWER_UP_INTERVAL) {
-	        spawnRandomPowerUp();
-	        lastPowerUpTime = now;
-	    }
-
-	    Iterator<PowerUp> iterator = powerUps.iterator();
-	    while (iterator.hasNext()) {
-	        PowerUp pu = iterator.next();
-	        if (pu.getHitbox().intersects(player.getHitbox())) {
-	            pu.applyToSnake(player);
-	            iterator.remove();
-	        }
-	    }
+		Iterator<PowerUp> iterator = powerUps.iterator();
+		while (iterator.hasNext()) {
+			PowerUp pu = iterator.next();
+			if (pu.getHitbox().intersects(player.getHitbox())) {
+				pu.applyToSnake(player);
+				iterator.remove();
+			}
+		}
 	}
 
 	private double normalizeAngle(double angle) {
-	    while (angle < -Math.PI) angle += 2 * Math.PI;
-	    while (angle > Math.PI) angle -= 2 * Math.PI;
-	    return angle;
+		while (angle < -Math.PI)
+			angle += 2 * Math.PI;
+		while (angle > Math.PI)
+			angle -= 2 * Math.PI;
+		return angle;
 	}
-
 
 	@Override
 	public void draw(Graphics graphics) {
+
 		player.render((Graphics2D) graphics);
 		if (player.isMoving()) {
 			for (Fruit f : fruits) {
@@ -225,13 +214,12 @@ public class Playing extends State implements StateMethods {
 			for (PowerUp pu : powerUps)
 				pu.render(graphics);
 
-			graphics.drawImage(gameTitleImg, 0, 0, GamePanel.getScreenWidth(), 54, null);
-
+			drawTopBar(graphics);
 			drawScore(graphics);
 			drawBorders(graphics);
 			drawPowerUpBar(graphics);
 
-			if (fruitEaten >= 20) {
+			if (fruitEaten >= 50) {
 				SoundPlayer.playSound("/assets/sounds/winner.wav");
 				gameOver();
 			}
@@ -239,6 +227,40 @@ public class Playing extends State implements StateMethods {
 			SoundPlayer.playSound("/assets/sounds/fail.wav");
 			gameOver();
 		}
+	}
+
+	private void drawTopBar(Graphics graphics) {
+		Graphics2D g2d = (Graphics2D) graphics;
+
+		int width = GamePanel.getScreenWidth();
+
+		int barX = 30;
+		int barY = 12;
+		int barWidth = width - 60;
+		int barHeight = 58;
+
+		g2d.setColor(new Color(251, 238, 203));
+		g2d.fillRoundRect(barX, barY, barWidth, barHeight, 24, 24);
+
+		g2d.setColor(new Color(120, 85, 50));
+		g2d.setStroke(new BasicStroke(3));
+		g2d.drawRoundRect(barX, barY, barWidth, barHeight, 24, 24);
+
+		String title = "🐍 Snake";
+
+		g2d.setFont(new Font("Segoe UI Emoji", Font.BOLD, 30));
+
+		int titleWidth = g2d.getFontMetrics().stringWidth(title);
+
+		int titleX = width / 2 - titleWidth / 2;
+
+		int titleY = barY + 39;
+
+		g2d.setColor(new Color(100, 80, 60, 120));
+		g2d.drawString(title, titleX + 2, titleY + 2);
+
+		g2d.setColor(new Color(55, 40, 25));
+		g2d.drawString(title, titleX, titleY);
 	}
 
 	private void drawBorders(Graphics graphics) {
@@ -317,14 +339,14 @@ public class Playing extends State implements StateMethods {
 			if (now - topWarningStart >= 3000) {
 				topState = BorderState.DANGER;
 				topDangerStart = now;
-				setTopBorderColor(Color.RED);
+				setTopBorderColor(BORDER_DANGER);
 			} else {
 				long phase = (now - topWarningStart) / 300;
-				setTopBorderColor((phase % 2 == 0) ? Color.YELLOW : Color.GREEN);
+				setTopBorderColor((phase % 2 == 0) ? BORDER_WARNING : BORDER_IDLE);
 			}
 		} else if (topState == BorderState.DANGER && now - topDangerStart >= DANGER_DURATION) {
 			topState = BorderState.IDLE;
-			setTopBorderColor(Color.GREEN);
+			setTopBorderColor(BORDER_IDLE);
 		}
 
 		// === BOTTOM ===
@@ -332,14 +354,14 @@ public class Playing extends State implements StateMethods {
 			if (now - bottomWarningStart >= 3000) {
 				bottomState = BorderState.DANGER;
 				bottomDangerStart = now;
-				setBottomBorderColor(Color.RED);
+				setBottomBorderColor(BORDER_DANGER);
 			} else {
 				long phase = (now - bottomWarningStart) / 300;
-				setBottomBorderColor((phase % 2 == 0) ? Color.YELLOW : Color.GREEN);
+				setBottomBorderColor((phase % 2 == 0) ? BORDER_WARNING : BORDER_IDLE);
 			}
 		} else if (bottomState == BorderState.DANGER && now - bottomDangerStart >= DANGER_DURATION) {
 			bottomState = BorderState.IDLE;
-			setBottomBorderColor(Color.GREEN);
+			setBottomBorderColor(BORDER_IDLE);
 		}
 
 		// === LEFT ===
@@ -347,14 +369,14 @@ public class Playing extends State implements StateMethods {
 			if (now - leftWarningStart >= 3000) {
 				leftState = BorderState.DANGER;
 				leftDangerStart = now;
-				setLeftBorderColor(Color.RED);
+				setLeftBorderColor(BORDER_DANGER);
 			} else {
 				long phase = (now - leftWarningStart) / 300;
-				setLeftBorderColor((phase % 2 == 0) ? Color.YELLOW : Color.GREEN);
+				setLeftBorderColor((phase % 2 == 0) ? BORDER_WARNING : BORDER_IDLE);
 			}
 		} else if (leftState == BorderState.DANGER && now - leftDangerStart >= DANGER_DURATION) {
 			leftState = BorderState.IDLE;
-			setLeftBorderColor(Color.GREEN);
+			setLeftBorderColor(BORDER_IDLE);
 		}
 
 		// === RIGHT ===
@@ -362,14 +384,14 @@ public class Playing extends State implements StateMethods {
 			if (now - rightWarningStart >= 3000) {
 				rightState = BorderState.DANGER;
 				rightDangerStart = now;
-				setRightBorderColor(Color.RED);
+				setRightBorderColor(BORDER_DANGER);
 			} else {
 				long phase = (now - rightWarningStart) / 300;
-				setRightBorderColor((phase % 2 == 0) ? Color.YELLOW : Color.GREEN);
+				setRightBorderColor((phase % 2 == 0) ? BORDER_WARNING : BORDER_IDLE);
 			}
 		} else if (rightState == BorderState.DANGER && now - rightDangerStart >= DANGER_DURATION) {
 			rightState = BorderState.IDLE;
-			setRightBorderColor(Color.GREEN);
+			setRightBorderColor(BORDER_IDLE);
 		}
 	}
 
@@ -410,11 +432,11 @@ public class Playing extends State implements StateMethods {
 			boolean exists = powerUps.stream().anyMatch(p -> selectedType.isInstance(p));
 			if (exists)
 				continue;
-			
+
 			boolean alreadyHeld = player.getHeldPowerUps().stream()
-		            .anyMatch(p -> selectedType.isInstance(p) && !p.isUsed());
-		     if (alreadyHeld)
-		            continue;
+					.anyMatch(p -> selectedType.isInstance(p) && !p.isUsed());
+			if (alreadyHeld)
+				continue;
 
 			Point point = PlayingUtils.getValidRandomPosition(topBorder, bottomBorder, leftBorder, rightBorder, size,
 					padding);
@@ -442,10 +464,11 @@ public class Playing extends State implements StateMethods {
 	private void drawPowerUpBar(Graphics g) {
 		Class<?>[] allTypes = { SpeedBoost.class, GrowthBoost.class, ShieldPowerUp.class, MagnetPowerUp.class };
 
-		int iconSize = 32;
-		int padding = 40;
-		int x = 50;
-		int y = 10;
+		int iconSize = 30;
+		int padding = 18;
+
+		int x = 55;
+		int y = 26;
 
 		Graphics2D g2d = (Graphics2D) g;
 
@@ -483,7 +506,7 @@ public class Playing extends State implements StateMethods {
 				remaining = player.getShieldEndTime() - System.currentTimeMillis();
 				icon = ShieldPowerUp.getIconStatic();
 				grayIcon = ShieldPowerUp.getGrayIconStatic();
-			}else if (type == MagnetPowerUp.class) {
+			} else if (type == MagnetPowerUp.class) {
 				isActive = player.hasMagnet();
 				remaining = player.getMagnetEndTime() - System.currentTimeMillis();
 				icon = MagnetPowerUp.getIconStatic();
@@ -494,8 +517,17 @@ public class Playing extends State implements StateMethods {
 				used = held.isUsed();
 
 			if (isActive) {
-				g2d.setColor(new Color(255, 255, 0, 128));
-				g2d.fillOval(drawX - 4, drawY - 4, iconSize + 8, iconSize + 8);
+				if (type == SpeedBoost.class) {
+					g2d.setColor(new Color(255, 190, 60, 190));
+				} else if (type == GrowthBoost.class) {
+					g2d.setColor(new Color(190, 80, 255, 190));
+				} else if (type == ShieldPowerUp.class) {
+					g2d.setColor(new Color(70, 170, 255, 190));
+				} else if (type == MagnetPowerUp.class) {
+					g2d.setColor(new Color(255, 90, 90, 190));
+				}
+
+				g2d.fillOval(drawX - 5, drawY - 5, iconSize + 10, iconSize + 10);
 			}
 
 			BufferedImage toDraw = (!isActive && (held == null || used)) ? grayIcon : icon;
@@ -506,15 +538,25 @@ public class Playing extends State implements StateMethods {
 
 			if (isActive && remaining > 0) {
 				String time = (remaining / 1000) + "s";
-				g2d.setFont(new Font("Arial", Font.PLAIN, 12));
-				g2d.setColor(Color.WHITE);
+
+				g2d.setFont(new Font("Segoe UI", Font.BOLD, 13));
+
+				if (type == SpeedBoost.class) {
+					g2d.setColor(new Color(180, 110, 20));
+				} else if (type == GrowthBoost.class) {
+					g2d.setColor(new Color(150, 40, 200));
+				} else if (type == ShieldPowerUp.class) {
+					g2d.setColor(new Color(30, 100, 190));
+				} else if (type == MagnetPowerUp.class) {
+					g2d.setColor(new Color(190, 45, 45));
+				}
+
 				g2d.drawString(time, drawX + iconSize + 4, drawY + iconSize - 4);
 			}
 		}
 	}
-	
-	private void checkMagnetPowerUp()
-	{
+
+	private void checkMagnetPowerUp() {
 		if (player.isMagnetActive()) {
 			SnakeSegment head = player.getSegments().get(0);
 			for (Fruit f : fruits) {
@@ -532,25 +574,34 @@ public class Playing extends State implements StateMethods {
 			}
 		}
 	}
+
 	private void drawScore(Graphics graphics) {
-		graphics.setColor(Color.GREEN);
-		graphics.setFont(new Font("Ink free", Font.BOLD, 40));
-		FontMetrics metrics = graphics.getFontMetrics(graphics.getFont());
-		graphics.drawString("Score: " + fruitEaten,
-				(GamePanel.getScreenWidth() - metrics.stringWidth("Score: " + fruitEaten)) - 100,
-				graphics.getFont().getSize());
+		Graphics2D g2d = (Graphics2D) graphics;
+
+		String scoreText = "Score: " + fruitEaten;
+
+		g2d.setFont(new Font("Segoe UI", Font.BOLD, 22));
+
+		g2d.setColor(new Color(80, 55, 30));
+
+		int textWidth = g2d.getFontMetrics().stringWidth(scoreText);
+
+		int x = GamePanel.getScreenWidth() - 60 - textWidth;
+
+		int y = 49;
+
+		g2d.drawString(scoreText, x, y);
 	}
 
 	public void gameOver() {
 		resetBorderStates();
-		if (fruitEaten > 20) {
-			fruitEaten = 20;
+		if (fruitEaten > 50) {
+			fruitEaten = 50;
 		}
 		game.getEndGame().setFruitEaten(fruitEaten);
-		game.getEndGame().setVictory(fruitEaten >= 20);
+		game.getEndGame().setVictory(fruitEaten >= 50);
 		GameState.state = GameState.ENDGAME;
 	}
-
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
@@ -573,66 +624,59 @@ public class Playing extends State implements StateMethods {
 	}
 
 	public void simulateKeyPress(char key) {
-	    int keyCode = KeyEvent.getExtendedKeyCodeForChar(key);
-	    if (keyCode == KeyEvent.VK_UNDEFINED) return;
+		int keyCode = KeyEvent.getExtendedKeyCodeForChar(key);
+		if (keyCode == KeyEvent.VK_UNDEFINED)
+			return;
 
-	    KeyEvent fakeEvent = new KeyEvent(
-	        game.getGamePanel(),
-	        KeyEvent.KEY_PRESSED,
-	        System.currentTimeMillis(),
-	        0,
-	        keyCode,
-	        key
-	    );
-	    keyPressed(fakeEvent);
+		KeyEvent fakeEvent = new KeyEvent(game.getGamePanel(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0,
+				keyCode, key);
+		keyPressed(fakeEvent);
 	}
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-	   
+
 		if (e.getKeyCode() == KeyEvent.VK_H) {
-		     game.setSelectedInput(InputType.CONTROLLER);
-		     System.out.println("Switched to CONTROLLER via key H");
-		     return;
+			game.setSelectedInput(InputType.CONTROLLER);
+			System.out.println("Switched to CONTROLLER via key H");
+			return;
 		}
 
-
 		if (game.getSelectedInput() != InputType.KEYBOARD)
-		    return;
+			return;
 
-	    switch (e.getKeyCode()) {
-	        case KeyEvent.VK_A -> player.setLeftPressed(true);
-	        case KeyEvent.VK_D -> player.setRightPressed(true);
+		switch (e.getKeyCode()) {
+		case KeyEvent.VK_A -> player.setLeftPressed(true);
+		case KeyEvent.VK_D -> player.setRightPressed(true);
 
-	        case KeyEvent.VK_E -> {
-	        	activateShield();
-	        }
+		case KeyEvent.VK_E -> {
+			activateShield();
+		}
 
-	        case KeyEvent.VK_Q -> {
-	        	activateMagnet();
-	        }
-	    }
+		case KeyEvent.VK_Q -> {
+			activateMagnet();
+		}
+		}
 	}
 
-
 	public void activateShield() {
-		 for (PowerUp pu : player.getHeldPowerUps()) {
-             if (!pu.isUsed() && pu instanceof ShieldPowerUp sp) {
-                 sp.activate(player);
-                 break;
-             }
-         }
-		
+		for (PowerUp pu : player.getHeldPowerUps()) {
+			if (!pu.isUsed() && pu instanceof ShieldPowerUp sp) {
+				sp.activate(player);
+				break;
+			}
+		}
+
 	}
 
 	public void activateMagnet() {
 		for (PowerUp pu : player.getHeldPowerUps()) {
-            if (pu instanceof MagnetPowerUp mp && !mp.isUsed()) {
-                mp.activate(player);
-                break;
-            }
-        }
-		
+			if (pu instanceof MagnetPowerUp mp && !mp.isUsed()) {
+				mp.activate(player);
+				break;
+			}
+		}
+
 	}
 
 	@Override
@@ -640,7 +684,7 @@ public class Playing extends State implements StateMethods {
 		switch (e.getKeyCode()) {
 		case KeyEvent.VK_A -> player.setLeftPressed(false);
 		case KeyEvent.VK_D -> player.setRightPressed(false);
-		
+
 		}
 	}
 
@@ -649,7 +693,7 @@ public class Playing extends State implements StateMethods {
 		lastFruitSpawnTime = 0;
 		lastPowerUpTime = 0;
 		pineappleCounter = 4;
-		player = new Snake(200, 200, 24, 24);
+		player = new Snake(200, 200, 24, 24, 4);
 		player.resetPowerUps();
 		fruits.clear();
 		powerUps.clear();
@@ -677,12 +721,11 @@ public class Playing extends State implements StateMethods {
 		leftWarningStart = 0;
 		rightWarningStart = 0;
 
-		setTopBorderColor(Color.GREEN);
-		setBottomBorderColor(Color.GREEN);
-		setLeftBorderColor(Color.GREEN);
-		setRightBorderColor(Color.GREEN);
+		setTopBorderColor(BORDER_IDLE);
+		setBottomBorderColor(BORDER_IDLE);
+		setLeftBorderColor(BORDER_IDLE);
+		setRightBorderColor(BORDER_IDLE);
 	}
-
 
 	public Snake getPlayer() {
 		return this.player;
@@ -736,5 +779,8 @@ public class Playing extends State implements StateMethods {
 		rightBorderColor = color;
 	}
 
+	public static Color getBorderDangerColor() {
+		return BORDER_DANGER;
+	}
 
 }

@@ -3,10 +3,9 @@ package game;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+
 import javax.swing.JPanel;
 
-import gameStates.GameState;
-import inputs.ControllerInput;
 import inputs.KeyboardInput;
 import inputs.MouseInput;
 
@@ -18,17 +17,17 @@ public class GamePanel extends JPanel {
 	private static final int UNIT_SIZE = 1;
 	private static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
 	private Game game;
-	
+
 	public GamePanel(Game game) {
 		this.game = game;
-		
+
 		setPanelSize();
 		this.setBackground(Color.BLACK);
 		this.setFocusable(true);
 		this.setLayout(null);
 		this.addKeyListener(new KeyboardInput(this));
 		this.addMouseListener(new MouseInput(this));
-		
+
 	}
 
 	private void setPanelSize() {
@@ -43,7 +42,6 @@ public class GamePanel extends JPanel {
 		super.paintComponent(graphics);
 		game.render(graphics);
 	}
-
 
 	public static int getScreenHeight() {
 		return SCREEN_HEIGHT;
@@ -60,7 +58,7 @@ public class GamePanel extends JPanel {
 	public GamePanel getGamePanel() {
 		return this;
 	}
-	
+
 	public Game getGame() {
 		return this.game;
 	}

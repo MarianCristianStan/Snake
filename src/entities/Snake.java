@@ -3,21 +3,17 @@ package entities;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.io.File;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.imageio.ImageIO;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 
 import gameStates.Playing;
 import utils.SoundPlayer;
@@ -57,31 +53,37 @@ public class Snake extends Entity {
 
 	private Clip eatingSound;
 	private long lastShieldSoundTime = 0;
-	private final long SHIELD_SOUND_COOLDOWN_MS = 1000; 
+	private final long SHIELD_SOUND_COOLDOWN_MS = 1000;
 
-
-	public Snake(float x, float y, int width, int height) {
+	public Snake(float x, float y, int width, int height, int segmentCount) {
 		super(x, y, width, height);
+
 		loadAssets();
 
-		for (int i = 0; i < 100; i++) {
-			float tx = x - (float) (Math.cos(angle) * i * 1f);
-			float ty = y - (float) (Math.sin(angle) * i * 1f);
+		int trailSize = segmentCount * SPACING + 50;
+
+		for (int i = 0; i < trailSize; i++) {
+			float tx = x - (float) (Math.cos(angle) * i);
+			float ty = y - (float) (Math.sin(angle) * i);
+
 			trail.add(new Point((int) tx, (int) ty));
 		}
 
 		segments.add(new SnakeSegment(x, y, angle, width, height));
-		for (int i = 1; i < 5; i++) {
+
+		for (int i = 1; i < segmentCount; i++) {
 			int index = i * SPACING;
+
 			if (index < trail.size()) {
 				Point p = trail.get(index);
+
 				segments.add(new SnakeSegment(p.x, p.y, angle, width, height));
 			}
 		}
 	}
 
 	private void loadAssets() {
-		
+
 		eatingSound = SoundPlayer.getClip("/assets/sounds/eating.wav");
 		try {
 			InputStream headStream = getClass().getResourceAsStream("/assets/snake/snakeHead.png");
@@ -178,6 +180,32 @@ public class Snake extends Entity {
 		}
 	}
 
+	public void renderPositionUpdate(float newX, float newY) {
+		SnakeSegment head = segments.get(0);
+
+		head.setPosition(newX, newY);
+		head.angle = angle;
+
+		this.x = newX;
+		this.y = newY;
+
+		trail.add(0, new Point((int) newX, (int) newY));
+
+		for (int i = 1; i < segments.size(); i++) {
+			int index = i * SPACING;
+
+			if (index < trail.size()) {
+				Point p = trail.get(index);
+
+				segments.get(i).setPosition(p.x, p.y);
+			}
+		}
+
+		if (trail.size() > 1000) {
+			trail = new ArrayList<>(trail.subList(0, 1000));
+		}
+	}
+
 	private void drawSegment(Graphics2D g2d, SnakeSegment seg, boolean isHead) {
 		BufferedImage img = isHead ? headImage : bodyImage;
 		AffineTransform old = g2d.getTransform();
@@ -255,12 +283,12 @@ public class Snake extends Entity {
 				if (!hasShield()) {
 					isMoving = false;
 					return;
-				}else {
+				} else {
 					long now = System.currentTimeMillis();
-				    if (now - lastShieldSoundTime > SHIELD_SOUND_COOLDOWN_MS) {
-				        SoundPlayer.playSound("/assets/sounds/shield_block.wav");
-				        lastShieldSoundTime = now;
-				    }
+					if (now - lastShieldSoundTime > SHIELD_SOUND_COOLDOWN_MS) {
+						SoundPlayer.playSound("/assets/sounds/shield_block.wav");
+						lastShieldSoundTime = now;
+					}
 				}
 
 			}
@@ -276,12 +304,11 @@ public class Snake extends Entity {
 		boolean collided = false;
 
 		if (head.intersects(left)) {
-			if (Playing.getLeftBorderColor().equals(Color.RED) && !hasShield()) {
+			if (Playing.getLeftBorderColor().equals(Playing.getBorderDangerColor()) && !hasShield()) {
 				collided = true;
 
 			} else {
-				if(hasShield() && Playing.getLeftBorderColor().equals(Color.RED))
-				{
+				if (hasShield() && Playing.getLeftBorderColor().equals(Playing.getBorderDangerColor())) {
 					SoundPlayer.playSound("/assets/sounds/shield_block.wav");
 				}
 				this.x = right.x - width - 1;
@@ -294,12 +321,11 @@ public class Snake extends Entity {
 			}
 		}
 		if (head.intersects(right)) {
-			if (Playing.getRightBorderColor().equals(Color.RED) && !hasShield()) {
+			if (Playing.getRightBorderColor().equals(Playing.getBorderDangerColor()) && !hasShield()) {
 				collided = true;
 
 			} else {
-				if(hasShield() && Playing.getLeftBorderColor().equals(Color.RED))
-				{
+				if (hasShield() && Playing.getRightBorderColor().equals(Playing.getBorderDangerColor())) {
 					SoundPlayer.playSound("/assets/sounds/shield_block.wav");
 				}
 				this.x = left.x + 1;
@@ -312,13 +338,12 @@ public class Snake extends Entity {
 			}
 		}
 		if (head.intersects(top)) {
-			if (Playing.getTopBorderColor().equals(Color.RED) && !hasShield()) {
+			if (Playing.getTopBorderColor().equals(Playing.getBorderDangerColor()) && !hasShield()) {
 
 				collided = true;
 
 			} else {
-				if(hasShield() && Playing.getLeftBorderColor().equals(Color.RED))
-				{
+				if (hasShield() && Playing.getTopBorderColor().equals(Playing.getBorderDangerColor())) {
 					SoundPlayer.playSound("/assets/sounds/shield_block.wav");
 				}
 				this.y = bottom.y - height - 1;
@@ -331,12 +356,11 @@ public class Snake extends Entity {
 			}
 		}
 		if (head.intersects(bottom)) {
-			if (Playing.getBottomBorderColor().equals(Color.RED) && !hasShield()) {
+			if (Playing.getBottomBorderColor().equals(Playing.getBorderDangerColor()) && !hasShield()) {
 				collided = true;
 
 			} else {
-				if(hasShield() && Playing.getLeftBorderColor().equals(Color.RED))
-				{
+				if (hasShield() && Playing.getBottomBorderColor().equals(Playing.getBorderDangerColor())) {
 					SoundPlayer.playSound("/assets/sounds/shield_block.wav");
 				}
 				this.y = top.y + 1;
@@ -425,9 +449,11 @@ public class Snake extends Entity {
 		shieldEndTime = 0;
 		magnetEndTime = 0;
 	}
+
 	public void setAngle(double angle) {
-	    this.angle = angle;
+		this.angle = angle;
 	}
+
 	public double getAngle() {
 		return angle;
 	}
@@ -484,5 +510,4 @@ public class Snake extends Entity {
 		hitbox.y = (int) y;
 	}
 
-	
 }
